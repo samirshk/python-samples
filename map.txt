@@ -1,0 +1,6 @@
+Samir Language
+vowels -> g
+--------------
+
+dog -> dgg
+cat -> cgt
