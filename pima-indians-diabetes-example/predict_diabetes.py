@@ -19,14 +19,14 @@ def load_data(filename):
     return dataset
 
 
-def split_dataset(dataset, split_ratio):
+def split_dataset(dataset, split_ratio=0.67):
     train_size = int(len(dataset) * split_ratio)
     train_set = []
-    copy = list(dataset)
+    test_set = list(dataset)
     while len(train_set) < train_size:
-        index = random.randrange(len(copy))
-        train_set.append(copy.pop(index))
-    return [train_set, copy]
+        index = random.randrange(len(test_set))
+        train_set.append(test_set.pop(index))
+    return [train_set, test_set]
 
 
 '''
@@ -50,42 +50,42 @@ def test_load_data():
     print('Loaded data file {0} with {1} rows'.format(filename, len(dataset)))
 
 
-def test_diabetes_predictor():
+def test_diabetes_guassiannb_predictor():
     print("test_diabetes_predictor()")
     script_dir = os.path.dirname(__file__)
     filename = os.path.join(script_dir, "pima-indians-diabetes.data.csv")
     dataset = load_data(filename)
     print('Loaded data file {0} with {1} rows'.format(filename, len(dataset)))
 
-    split_ratio = 0.67
-    train, test = split_dataset(dataset, split_ratio)
-    print('Split {0} rows into\n train {1}\n test with {2}'.format(len(dataset), len(train), len(test)))
+    train_set, test_set = split_dataset(dataset)
+    print('Split {0} rows into\n train_set {1}\n test_set with {2}'.format(len(dataset), len(train_set), len(test_set)))
 
-    print(np)
+    model = train_classifier_gaussiannb(train_set)
 
-    Y = np.array([x.pop() for x in train])
-    print(len(Y))
-    X = np.array(train)
-    print(len(X))
+    test_y = [tx.pop() for tx in test_set]
+    predicted_y = model.predict(test_set)
 
-    #Create a Gaussian Classifier
+    accuracy = eval_accuracy(predicted_y, test_y)
+    print("accuracy: {0:0.2f}%".format(accuracy))
+
+
+def train_classifier_gaussiannb(train_set):
+    y = np.array([a.pop() for a in train_set])
+    x = np.array(train_set)
     model = GaussianNB()
+    model.fit(x, y)
+    return model
 
-    model.fit(X, Y)
 
-    testY = [tx.pop() for tx in test]
-    pY = model.predict(test)
-    #
-    # print("prediction is {0}".format(pY))
-    # print("actual is {0}".format(testY))
-
+def eval_accuracy(prediction, actual):
     correct = 0
-    for c in range(len(pY)):
-        if pY[c] == testY[c]:
+    for c in range(len(prediction)):
+        if prediction[c] == actual[c]:
             correct += 1
         else:
-            print("wrong c:{0} t:{1} tY:{2} p:{3}".format(c, test[c], testY[c], pY[c]))
-    print("accuracy: {0:0.2f}".format((correct / len(pY))*100))
+            print("wrong c:{0} t:{1} p:{2}".format(c, actual[c], prediction[c]))
+    accuracy = (correct / len(prediction)) * 100
+    return accuracy
 
 
 '''
@@ -97,6 +97,6 @@ try:
     print("start")
     test_load_data()
     test_split_dataset()
-    test_diabetes_predictor()
+    test_diabetes_guassiannb_predictor()
 except TypeError as err:
     print(err)
