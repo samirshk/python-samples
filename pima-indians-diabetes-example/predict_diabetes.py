@@ -2,6 +2,9 @@ import csv
 import os
 import random
 
+import numpy as np
+from sklearn.naive_bayes import GaussianNB
+
 '''
 CODE
 '''
@@ -24,8 +27,6 @@ def split_dataset(dataset, split_ratio):
         index = random.randrange(len(copy))
         train_set.append(copy.pop(index))
     return [train_set, copy]
-
-
 
 
 '''
@@ -60,6 +61,26 @@ def test_diabetes_predictor():
     train, test = split_dataset(dataset, split_ratio)
     print('Split {0} rows into\n train {1}\n test with {2}'.format(len(dataset), len(train), len(test)))
 
+    print(np)
+
+    Y = np.array([x.pop() for x in dataset])
+    print(len(Y))
+    X = np.array(dataset)
+    print(len(X))
+
+    #Create a Gaussian Classifier
+    model = GaussianNB()
+
+    model.fit(X, Y)
+
+    prediction = model.predict([
+        [7, 100, 0, 0, 0, 30.0, 0.484, 32],
+        [0, 118, 84, 47, 230, 45.8, 0.551, 31],
+        [7, 107, 74, 0, 0, 29.6, 0.254, 31],
+        [1, 103, 30, 38, 83, 43.3, 0.183, 33]
+    ])
+
+    print("prediction is {0}".format(prediction))
 
 '''
 MAIN
