@@ -63,9 +63,9 @@ def test_diabetes_predictor():
 
     print(np)
 
-    Y = np.array([x.pop() for x in dataset])
+    Y = np.array([x.pop() for x in train])
     print(len(Y))
-    X = np.array(dataset)
+    X = np.array(train)
     print(len(X))
 
     #Create a Gaussian Classifier
@@ -73,14 +73,20 @@ def test_diabetes_predictor():
 
     model.fit(X, Y)
 
-    prediction = model.predict([
-        [7, 100, 0, 0, 0, 30.0, 0.484, 32],
-        [0, 118, 84, 47, 230, 45.8, 0.551, 31],
-        [7, 107, 74, 0, 0, 29.6, 0.254, 31],
-        [1, 103, 30, 38, 83, 43.3, 0.183, 33]
-    ])
+    testY = [tx.pop() for tx in test]
+    pY = model.predict(test)
+    #
+    # print("prediction is {0}".format(pY))
+    # print("actual is {0}".format(testY))
 
-    print("prediction is {0}".format(prediction))
+    correct = 0
+    for c in range(len(pY)):
+        if pY[c] == testY[c]:
+            correct += 1
+        else:
+            print("wrong c:{0} t:{1} tY:{2} p:{3}".format(c, test[c], testY[c], pY[c]))
+    print("accuracy: {0:0.2f}".format((correct / len(pY))*100))
+
 
 '''
 MAIN
