@@ -9,13 +9,23 @@ from sklearn.naive_bayes import GaussianNB
 CODE
 '''
 
+'''
+load_data
+v1,v2,,,
+ham,"Go until jurong point, crazy.. Available only in bugis n great world la e buffet... Cine there got amore wat...",,,
+ham,Ok lar... Joking wif u oni...,,,
+spam,Free entry in 2 a wkly comp to win FA Cup final tkts 21st May 2005. Text FA to 87121 to receive entry question(std txt rate)T&C's apply 08452810075over18's,,,
+'''
 
 def load_data(filename):
     file = open(filename, "r")
     lines = csv.reader(file)
     dataset = list(lines)
     for i in range(len(dataset)):
-        dataset[i] = [float(x) for x in dataset[i]]
+        if dataset[i][0] == 'spam':
+            dataset[i][0] = 1
+        else:
+            dataset[i][0] = 0
     return dataset
 
 
@@ -42,10 +52,10 @@ def test_split_dataset():
     print('Split {0} rows into\n train {1}\n test with {2}'.format(len(dataset), len(train), len(test)))
 
 
-def test_load_data():
+def do_load_data():
     print("test_load_data()")
     script_dir = os.path.dirname(__file__)
-    filename = os.path.join(script_dir, "spam.data.csv")
+    filename = os.path.join(script_dir, "spam.csv")
     dataset = load_data(filename)
     print('Loaded data file {0} with {1} rows'.format(filename, len(dataset)))
 
@@ -95,7 +105,7 @@ MAIN
 
 try:
     print("start")
-    test_load_data()
+    do_load_data()
     test_split_dataset()
     test_diabetes_guassiannb_predictor()
 except TypeError as err:
