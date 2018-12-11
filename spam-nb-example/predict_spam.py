@@ -1,9 +1,16 @@
-import csv
 import os
-import random
 
-import numpy as np
 from sklearn.naive_bayes import GaussianNB
+
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer
+from wordcloud import WordCloud
+import pandas as pd
+import numpy as np
+from nltk.corpus import stopwords
+
+import matplotlib.pyplot as plt
 
 '''
 CODE
@@ -18,57 +25,53 @@ spam,Free entry in 2 a wkly comp to win FA Cup final tkts 21st May 2005. Text FA
 '''
 
 def load_data(filename):
-    file = open(filename, "r")
-    lines = csv.reader(file)
-    dataset = list(lines)
-    for i in range(len(dataset)):
-        if dataset[i][0] == 'spam':
-            dataset[i][0] = 1
-        else:
-            dataset[i][0] = 0
+    # file = open(filename, "r")
+    # lines = csv.reader(file)
+
+    dataset = pd.read_csv(filename, encoding='latin-1')
+    dataset['label'] = dataset['label'].map({'ham': 0, 'spam': 1})
+
+
+    # dataset = list(lines)
+    # for i in range(1, len(dataset)):
+    #     if dataset[i][0] == 'spam':
+    #         dataset[i][0] = 1
+    #     else:
+    #         dataset[i][0] = 0
     return dataset
 
 
 def split_dataset(dataset, split_ratio=0.67):
-    train_size = int(len(dataset) * split_ratio)
-    train_set = []
-    test_set = list(dataset)
-    while len(train_set) < train_size:
-        index = random.randrange(len(test_set))
-        train_set.append(test_set.pop(index))
-    return [train_set, test_set]
+    all_messages = dataset['message'].shape[0]
+    train_indexes, test_indexes = list(), list()
+
+    for i in range(dataset.shape[0]):
+        if np.random.uniform(0, 1) < split_ratio:
+            train_indexes += [i]
+        else:
+            test_indexes += [i]
+    train = dataset.loc[train_indexes]
+    test = dataset.loc[test_indexes]
+    train.reset_index(inplace=True)
+    test.reset_index(inplace=True)
+
+    print(train.head())
+    print(test.head())
+
+    return [train, test]
 
 
-'''
-TEST
-'''
-
-
-def test_split_dataset():
-    print("test_split_dataset()")
-    dataset = [[1], [2], [3], [4], [5]]
-    split_ratio = 0.67
-    train, test = split_dataset(dataset, split_ratio)
-    print('Split {0} rows into\n train {1}\n test with {2}'.format(len(dataset), len(train), len(test)))
-
-
-def do_load_data():
-    print("test_load_data()")
+def test_spam_guassiannb_predictor():
+    print("test_spam_guassiannb_predictor()")
     script_dir = os.path.dirname(__file__)
     filename = os.path.join(script_dir, "spam.csv")
     dataset = load_data(filename)
     print('Loaded data file {0} with {1} rows'.format(filename, len(dataset)))
 
-
-def test_diabetes_guassiannb_predictor():
-    print("test_diabetes_predictor()")
-    script_dir = os.path.dirname(__file__)
-    filename = os.path.join(script_dir, "spam.data.csv")
-    dataset = load_data(filename)
-    print('Loaded data file {0} with {1} rows'.format(filename, len(dataset)))
-
     train_set, test_set = split_dataset(dataset)
     print('Split {0} rows into\n train_set {1}\n test_set with {2}'.format(len(dataset), len(train_set), len(test_set)))
+
+    find_spam_words(train_set)
 
     model = train_classifier_gaussiannb(train_set)
 
@@ -78,6 +81,47 @@ def test_diabetes_guassiannb_predictor():
     accuracy = eval_accuracy(predicted_y, test_y)
     print("accuracy: {0:0.2f}%".format(accuracy))
 
+
+def find_spam_words(train_set):
+    message_list = train_set[train_set['label'] == 1]['message'].values
+
+    word_list = []
+
+    spam_words = ' '.join(list(message_list))
+
+    # tokenize ngram=1
+    words = word_tokenize(spam_words)
+    words = [w for w in words if len(w) > 2]
+
+    sw = set(stopwords.words('english'))
+
+    words = [w for w in words if not w in sw]
+
+    # stemming
+    stemmer = PorterStemmer()
+    words = [stemmer.stem(word) for word in words]
+
+    for i in range(len(message_list)):
+        message = message_list[i].lower()
+
+
+        # # remove stopwords
+        # sw =
+        # words = [word for word in words if word not in sw]
+
+        #stemming
+        stemmer = PorterStemmer()
+        words = [stemmer.stem(word) for word in words]
+        word_list.append(words)
+
+    spam_words = ' '.join(list(message_list))
+    stopwords = set(STOPWORDS)
+    spam_wc = WordCloud(stopwords=stopwords).generate(text=spam_words)
+
+    plt.imshow(spam_wc)
+    plt.axis('off')
+    plt.show()
+    return message_col
 
 def train_classifier_gaussiannb(train_set):
     y = np.array([a.pop() for a in train_set])
@@ -105,8 +149,6 @@ MAIN
 
 try:
     print("start")
-    do_load_data()
-    test_split_dataset()
-    test_diabetes_guassiannb_predictor()
+    test_spam_guassiannb_predictor()
 except TypeError as err:
     print(err)
