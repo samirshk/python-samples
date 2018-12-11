@@ -42,7 +42,6 @@ def load_data(filename):
 
 
 def split_dataset(dataset, split_ratio=0.67):
-    all_messages = dataset['message'].shape[0]
     train_indexes, test_indexes = list(), list()
 
     for i in range(dataset.shape[0]):
@@ -85,8 +84,6 @@ def test_spam_guassiannb_predictor():
 def find_spam_words(train_set):
     message_list = train_set[train_set['label'] == 1]['message'].values
 
-    word_list = []
-
     spam_words = ' '.join(list(message_list))
 
     # tokenize ngram=1
@@ -101,27 +98,7 @@ def find_spam_words(train_set):
     stemmer = PorterStemmer()
     words = [stemmer.stem(word) for word in words]
 
-    for i in range(len(message_list)):
-        message = message_list[i].lower()
-
-
-        # # remove stopwords
-        # sw =
-        # words = [word for word in words if word not in sw]
-
-        #stemming
-        stemmer = PorterStemmer()
-        words = [stemmer.stem(word) for word in words]
-        word_list.append(words)
-
-    spam_words = ' '.join(list(message_list))
-    stopwords = set(STOPWORDS)
-    spam_wc = WordCloud(stopwords=stopwords).generate(text=spam_words)
-
-    plt.imshow(spam_wc)
-    plt.axis('off')
-    plt.show()
-    return message_col
+    return words
 
 def train_classifier_gaussiannb(train_set):
     y = np.array([a.pop() for a in train_set])
