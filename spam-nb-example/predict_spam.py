@@ -9,6 +9,7 @@ from wordcloud import WordCloud
 import pandas as pd
 import numpy as np
 from nltk.corpus import stopwords
+from collections import Counter
 
 import matplotlib.pyplot as plt
 
@@ -25,19 +26,8 @@ spam,Free entry in 2 a wkly comp to win FA Cup final tkts 21st May 2005. Text FA
 '''
 
 def load_data(filename):
-    # file = open(filename, "r")
-    # lines = csv.reader(file)
-
     dataset = pd.read_csv(filename, encoding='latin-1')
     dataset['label'] = dataset['label'].map({'ham': 0, 'spam': 1})
-
-
-    # dataset = list(lines)
-    # for i in range(1, len(dataset)):
-    #     if dataset[i][0] == 'spam':
-    #         dataset[i][0] = 1
-    #     else:
-    #         dataset[i][0] = 0
     return dataset
 
 
@@ -70,9 +60,26 @@ def test_spam_guassiannb_predictor():
     train_set, test_set = split_dataset(dataset)
     print('Split {0} rows into\n train_set {1}\n test_set with {2}'.format(len(dataset), len(train_set), len(test_set)))
 
-    find_spam_words(train_set)
+    spam_words_to_id_map, spam_id_to_words_map = find_top_spam_words(train_set)
+
+    print(spam_words_to_id_map, spam_id_to_words_map)
+
+    for index, row in train_set.iterrows():
+        row["message_feature_vector"] = np.zeros(len(spam_id_to_words_map))
+        msg = normalize_text(row["message"])
+        for w in msg:
+            if w in spam_words_to_id_map:
+                row["message_feature_vector"][spam_words_to_id_map[w]] = 1
 
     model = train_classifier_gaussiannb(train_set)
+
+    for index, row in test_set.iterrows():
+        row["message_feature_vector"] = np.zeros(len(spam_id_to_words_map))
+        msg = normalize_text(row["message"])
+        for w in msg:
+            if w in spam_words_to_id_map:
+                row["message_feature_vector"][spam_words_to_id_map[w]] = 1
+
 
     test_y = [tx.pop() for tx in test_set]
     predicted_y = model.predict(test_set)
@@ -81,28 +88,52 @@ def test_spam_guassiannb_predictor():
     print("accuracy: {0:0.2f}%".format(accuracy))
 
 
-def find_spam_words(train_set):
+def find_top_spam_words(train_set):
     message_list = train_set[train_set['label'] == 1]['message'].values
 
     spam_words = ' '.join(list(message_list))
 
+    words = normalize_text(spam_words)
+
+    word_counter = Counter(words)
+
+    words = word_counter.most_common(10)
+
+    print(words)
+
+    spam_words_to_id_map = { }
+
+    i = 0
+    for w in words:
+        if w[0] in spam_words_to_id_map:
+            continue
+        else:
+            spam_words_to_id_map[w[0]] = i
+            i += 1
+
+    spam_id_to_word_map = { }
+    for key in spam_words_to_id_map:
+        spam_id_to_word_map[spam_words_to_id_map[key]] = key
+
+    return spam_words_to_id_map, spam_id_to_word_map
+
+
+def normalize_text(spam_words):
     # tokenize ngram=1
     words = word_tokenize(spam_words)
     words = [w for w in words if len(w) > 2]
-
     sw = set(stopwords.words('english'))
-
     words = [w for w in words if not w in sw]
-
     # stemming
     stemmer = PorterStemmer()
     words = [stemmer.stem(word) for word in words]
-
     return words
 
+
 def train_classifier_gaussiannb(train_set):
-    y = np.array([a.pop() for a in train_set])
-    x = np.array(train_set)
+    y = np.array(train_set["label"])
+    print(train_set["message_feature_vector"])
+    x = [x.pop() for x in train_set["message_feature_vector"]]
     model = GaussianNB()
     model.fit(x, y)
     return model
