@@ -33,7 +33,6 @@ def load_data(filename):
     dataset = pd.read_csv(filename, encoding='latin-1')
     dataset['label'] = dataset['label'].map({'ham': 0, 'spam': 1})
     dataset['message_feature_vector'] = [np.zeros(num_top_words)] * len(dataset)
-    print(dataset.head())
     dataset.reindex()
     return dataset
 
@@ -51,14 +50,10 @@ def split_dataset(dataset):
     train.reset_index(inplace=True)
     test.reset_index(inplace=True)
 
-    print(train.head())
-    print(test.head())
-
     return [train, test]
 
 
 def run_spam_predictor():
-    print("run_spam_predictor()")
     script_dir = os.path.dirname(__file__)
     filename = os.path.join(script_dir, "spam.csv")
     dataset = load_data(filename)
@@ -68,6 +63,7 @@ def run_spam_predictor():
     print('Split {0} rows into\n train_set {1}\n test_set with {2}'.format(len(dataset), len(train_set), len(test_set)))
 
     spam_words_to_id_map, spam_id_to_words_map = find_top_spam_words(train_set)
+    print('top spam words {0}'.format(spam_words_to_id_map.keys()))
 
     train_data_x = [np.zeros(num_top_words)] * len(train_set)
     train_data_y = np.zeros((len(train_set), 1))
@@ -87,6 +83,7 @@ def run_spam_predictor():
         train_i += 1
 
     model = train_classifier(train_data_x, train_data_y)
+    print('Trained classifier {0}'.format(model))
 
     test_data_x = [np.zeros(num_top_words)] * len(test_set)
     test_data_y = np.zeros((len(test_set), 1))
@@ -102,6 +99,7 @@ def run_spam_predictor():
         test_data_y[test_i] = row['label']
         test_i += 1
 
+    print('test predictions')
     predicted_y = model.predict(test_data_x)
 
     accuracy = eval_accuracy(predicted_y, test_data_y)
@@ -165,8 +163,8 @@ def eval_accuracy(prediction, actual):
     for c in range(len(prediction)):
         if prediction[c] == actual[c]:
             correct += 1
-        else:
-            print("wrong c:{0} t:{1} p:{2}".format(c, actual[c], prediction[c]))
+        # else:
+        #     print("wrong c:{0} t:{1} p:{2}".format(c, actual[c], prediction[c]))
     accuracy = (correct / len(prediction)) * 100
     return accuracy
 
@@ -177,7 +175,7 @@ MAIN
 
 
 try:
-    print("start")
+    print("---Random Forest spam predictor---")
     run_spam_predictor()
 except TypeError as err:
     print(err)
