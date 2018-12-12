@@ -2,18 +2,12 @@ import os
 
 from sklearn.naive_bayes import GaussianNB
 
-from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
-from wordcloud import WordCloud
 import pandas as pd
 import numpy as np
 from nltk.corpus import stopwords
 from collections import Counter
-
-from array import array
-import matplotlib.pyplot as plt
-
 
 
 '''
@@ -23,7 +17,8 @@ CODE
 '''
 Global
 '''
-num_features = 10
+num_top_words = 500 #num_features
+split_ratio = 0.75 #train/test split
 
 
 '''
@@ -37,13 +32,13 @@ spam,Free entry in 2 a wkly comp to win FA Cup final tkts 21st May 2005. Text FA
 def load_data(filename):
     dataset = pd.read_csv(filename, encoding='latin-1')
     dataset['label'] = dataset['label'].map({'ham': 0, 'spam': 1})
-    dataset['message_feature_vector'] = [np.zeros(num_features)]*len(dataset)
+    dataset['message_feature_vector'] = [np.zeros(num_top_words)] * len(dataset)
     print(dataset.head())
     dataset.reindex()
     return dataset
 
 
-def split_dataset(dataset, split_ratio=0.67):
+def split_dataset(dataset):
     train_indexes, test_indexes = list(), list()
 
     for i in range(dataset.shape[0]):
@@ -65,7 +60,7 @@ def split_dataset(dataset, split_ratio=0.67):
 def test_spam_guassiannb_predictor():
     print("test_spam_guassiannb_predictor()")
     script_dir = os.path.dirname(__file__)
-    filename = os.path.join(script_dir, "spam-tmp.csv")
+    filename = os.path.join(script_dir, "spam.csv")
     dataset = load_data(filename)
     print('Loaded data file {0} with {1} rows'.format(filename, len(dataset)))
 
@@ -74,35 +69,48 @@ def test_spam_guassiannb_predictor():
 
     spam_words_to_id_map, spam_id_to_words_map = find_top_spam_words(train_set)
 
+    train_data_x = [np.zeros(num_top_words)] * len(train_set)
+    train_data_y = np.zeros((len(train_set), 1))
+    train_i = 0
     for index, row in train_set.iterrows():
         # fv = [int(0)]*len(spam_id_to_words_map)
         # fv = np.ndarray(shape=(1,len(spam_id_to_words_map)), dtype=float)
-        fv = np.zeros(num_features)
+        fv = np.zeros(num_top_words)
         # fv = row['message_feature_vector']
         msg = normalize_text(row['message'])
         for w in msg:
             if w in spam_words_to_id_map:
                 fv[spam_words_to_id_map[w]] = 1
         train_set.at[index, 'message_feature_vector'] = fv
+        train_data_x[train_i] = fv
+        train_data_y[train_i] = row['label']
+        train_i += 1
 
-    model = train_classifier_gaussiannb(train_set)
+    model = train_classifier_gaussiannb(train_data_x, train_data_y)
 
+    test_data_x = [np.zeros(num_top_words)] * len(test_set)
+    test_data_y = np.zeros((len(test_set), 1))
+    test_i = 0
     for index, row in test_set.iterrows():
-        fv = np.zeros(num_features)
+        fv = np.zeros(num_top_words)
         msg = normalize_text(row['message'])
         for w in msg:
             if w in spam_words_to_id_map:
                 fv[spam_words_to_id_map[w]] = 1
         test_set.at[index, 'message_feature_vector'] = fv
+        test_data_x[test_i] = fv
+        test_data_y[test_i] = row['label']
+        test_i += 1
 
-    test_y = [tx.pop() for tx in test_set]
-    predicted_y = model.predict(test_set)
+    predicted_y = model.predict(test_data_x)
 
-    accuracy = eval_accuracy(predicted_y, test_y)
+    accuracy = eval_accuracy(predicted_y, test_data_y)
     print("accuracy: {0:0.2f}%".format(accuracy))
 
 
 def find_top_spam_words(train_set):
+    global num_top_words
+
     message_list = train_set[train_set['label'] == 1]['message'].values
 
     spam_words = ' '.join(list(message_list))
@@ -111,7 +119,11 @@ def find_top_spam_words(train_set):
 
     word_counter = Counter(words)
 
-    words = word_counter.most_common(num_features)
+    words = word_counter.most_common(num_top_words)
+
+    if len(words) != num_top_words:
+        print("force change num_top_words to " + str(len(words)))
+        num_top_words = len(words)
 
     spam_words_to_id_map = {}
 
@@ -142,23 +154,9 @@ def normalize_text(spam_words):
     return words
 
 
-def train_classifier_gaussiannb(train_set):
-    yt = np.array(train_set['label'])
-    # for y in range(yt):
-    #     if len(yt[y]) > 1:
-    #         print("error: " + yt[y])
-    xt = np.ndarray(train_set['message_feature_vector'])
-    print (xt.shape)
-    for i in train_set['message_feature_vector']:
-        print (len(i))
-
-    for x in range(len(xt)):
-        if len(xt[x]) != num_features:
-            print("error: " + xt[x])
-
-    train_set.to_csv("mmm.csv")
+def train_classifier_gaussiannb(train_x, train_y):
     model = GaussianNB()
-    model.fit(xt, yt)
+    model.fit(train_x, train_y)
     return model
 
 
