@@ -1,6 +1,6 @@
 import os
 
-from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import RandomForestClassifier
 
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
@@ -57,8 +57,8 @@ def split_dataset(dataset):
     return [train, test]
 
 
-def test_spam_guassiannb_predictor():
-    print("test_spam_guassiannb_predictor()")
+def run_spam_predictor():
+    print("run_spam_predictor()")
     script_dir = os.path.dirname(__file__)
     filename = os.path.join(script_dir, "spam.csv")
     dataset = load_data(filename)
@@ -86,7 +86,7 @@ def test_spam_guassiannb_predictor():
         train_data_y[train_i] = row['label']
         train_i += 1
 
-    model = train_classifier_gaussiannb(train_data_x, train_data_y)
+    model = train_classifier(train_data_x, train_data_y)
 
     test_data_x = [np.zeros(num_top_words)] * len(test_set)
     test_data_y = np.zeros((len(test_set), 1))
@@ -154,8 +154,8 @@ def normalize_text(spam_words):
     return words
 
 
-def train_classifier_gaussiannb(train_x, train_y):
-    model = GaussianNB()
+def train_classifier(train_x, train_y):
+    model = RandomForestClassifier(n_estimators=100)
     model.fit(train_x, train_y)
     return model
 
@@ -178,6 +178,6 @@ MAIN
 
 try:
     print("start")
-    test_spam_guassiannb_predictor()
+    run_spam_predictor()
 except TypeError as err:
     print(err)
