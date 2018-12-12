@@ -45,7 +45,7 @@ def test_split_dataset():
 def test_load_data():
     print("test_load_data()")
     script_dir = os.path.dirname(__file__)
-    filename = os.path.join(script_dir, "spam.data.csv")
+    filename = os.path.join(script_dir, "pima-indians-diabetes.data.csv")
     dataset = load_data(filename)
     print('Loaded data file {0} with {1} rows'.format(filename, len(dataset)))
 
@@ -53,7 +53,7 @@ def test_load_data():
 def test_diabetes_guassiannb_predictor():
     print("test_diabetes_predictor()")
     script_dir = os.path.dirname(__file__)
-    filename = os.path.join(script_dir, "spam.data.csv")
+    filename = os.path.join(script_dir, "pima-indians-diabetes.data.csv")
     dataset = load_data(filename)
     print('Loaded data file {0} with {1} rows'.format(filename, len(dataset)))
 
