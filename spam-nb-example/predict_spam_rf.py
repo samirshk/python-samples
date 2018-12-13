@@ -18,7 +18,7 @@ CODE
 '''
 Global
 '''
-num_top_words = 100 #num_features
+num_top_words = 500 #num_features
 split_ratio = 0.75 #train/test split
 gram = 1
 
@@ -94,23 +94,22 @@ def run_spam_predictor(classifier = 'nb rf'):
         test_data_y[test_i] = row['label']
         test_i += 1
 
-    print("\n\n\n****Run Classifiers****\n\n")
+    print("\n\n\n****Run Classifiers****\n")
     max_acc = 0.0
     winning_classifier = ''
     for c in classifier.split():
         model = train_classifier(train_data_x, train_data_y, c)
-        print('Trained classifier {0}'.format(model))
         start = datetime.datetime.now()
-        print('start {0} predict {1}', start , len(test_data_y))
         predicted_y = model.predict(test_data_x)
         runtime = datetime.datetime.now()-start
-        print('end predict {0}', runtime.microseconds)
+        print('speed: {0:0.2f}/msg'.format(runtime.microseconds/len(test_data_y)))
         accuracy = eval_accuracy(predicted_y, test_data_y)
         print("accuracy: {0:0.2f}%".format(accuracy))
-        if(max_acc < accuracy):
+        if max_acc < accuracy:
             max_acc = accuracy
             winning_classifier = c
-    print("\n\n\n*****Classifier {0} more accurate\n\n\n".format(winning_classifier))
+    print("\nClassifier {0} more accurate\n\n\n".format(winning_classifier))
+
 
 def find_top_spam_words(train_set):
     global num_top_words
@@ -179,7 +178,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 def train_classifier_rf(train_x, train_y):
-    print("***Random Forest Classifier***")
+    print("\n***Random Forest Classifier***")
     model = RandomForestClassifier(n_estimators=100)
     model.fit(train_x, train_y)
     return model
