@@ -152,10 +152,6 @@ def normalize_text(spam_words):
     return words
 
 
-def train_classifier(train_x, train_y):
-    model = GaussianNB()
-    model.fit(train_x, train_y)
-    return model
 
 
 def eval_accuracy(prediction, actual):

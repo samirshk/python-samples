@@ -1,6 +1,6 @@
+import datetime
 import os
 
-from sklearn.ensemble import RandomForestClassifier
 
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from nltk.corpus import stopwords
 from collections import Counter
+from nltk import ngrams
 
 
 '''
@@ -17,9 +18,9 @@ CODE
 '''
 Global
 '''
-num_top_words = 500 #num_features
+num_top_words = 100 #num_features
 split_ratio = 0.75 #train/test split
-
+gram = 1
 
 '''
 load_data
@@ -53,7 +54,7 @@ def split_dataset(dataset):
     return [train, test]
 
 
-def run_spam_predictor():
+def run_spam_predictor(classifier = 'nb rf'):
     script_dir = os.path.dirname(__file__)
     filename = os.path.join(script_dir, "spam.csv")
     dataset = load_data(filename)
@@ -69,10 +70,7 @@ def run_spam_predictor():
     train_data_y = np.zeros((len(train_set), 1))
     train_i = 0
     for index, row in train_set.iterrows():
-        # fv = [int(0)]*len(spam_id_to_words_map)
-        # fv = np.ndarray(shape=(1,len(spam_id_to_words_map)), dtype=float)
         fv = np.zeros(num_top_words)
-        # fv = row['message_feature_vector']
         msg = normalize_text(row['message'])
         for w in msg:
             if w in spam_words_to_id_map:
@@ -81,9 +79,6 @@ def run_spam_predictor():
         train_data_x[train_i] = fv
         train_data_y[train_i] = row['label']
         train_i += 1
-
-    model = train_classifier(train_data_x, train_data_y)
-    print('Trained classifier {0}'.format(model))
 
     test_data_x = [np.zeros(num_top_words)] * len(test_set)
     test_data_y = np.zeros((len(test_set), 1))
@@ -99,12 +94,23 @@ def run_spam_predictor():
         test_data_y[test_i] = row['label']
         test_i += 1
 
-    print('test predictions')
-    predicted_y = model.predict(test_data_x)
-
-    accuracy = eval_accuracy(predicted_y, test_data_y)
-    print("accuracy: {0:0.2f}%".format(accuracy))
-
+    print("\n\n\n****Run Classifiers****\n\n")
+    max_acc = 0.0
+    winning_classifier = ''
+    for c in classifier.split():
+        model = train_classifier(train_data_x, train_data_y, c)
+        print('Trained classifier {0}'.format(model))
+        start = datetime.datetime.now()
+        print('start {0} predict {1}', start , len(test_data_y))
+        predicted_y = model.predict(test_data_x)
+        runtime = datetime.datetime.now()-start
+        print('end predict {0}', runtime.microseconds)
+        accuracy = eval_accuracy(predicted_y, test_data_y)
+        print("accuracy: {0:0.2f}%".format(accuracy))
+        if(max_acc < accuracy):
+            max_acc = accuracy
+            winning_classifier = c
+    print("\n\n\n*****Classifier {0} more accurate\n\n\n".format(winning_classifier))
 
 def find_top_spam_words(train_set):
     global num_top_words
@@ -141,9 +147,15 @@ def find_top_spam_words(train_set):
 
 
 def normalize_text(spam_words):
-    # tokenize ngram=1
+    global gram
     words = word_tokenize(spam_words)
-    words = [w for w in words if len(w) > 2]
+    words = [w.lower() for w in words if len(w) > 2]
+
+    if gram > 1:
+        sixgrams = ngrams(words, gram)
+        words = [w for w in sixgrams]
+        return words
+
     sw = set(stopwords.words('english'))
     words = [w for w in words if not w in sw]
     # stemming
@@ -152,8 +164,32 @@ def normalize_text(spam_words):
     return words
 
 
-def train_classifier(train_x, train_y):
+def train_classifier(train_x, train_y, classifier='nb'):
+    if classifier == 'nb':
+        return train_classifier_nb(train_x, train_y)
+    elif classifier == 'rf':
+        return train_classifier_rf(train_x, train_y)
+    else:
+        raise Exception('no such classifier {0}'.format(classifier))
+
+'''
+Classifiers
+'''
+from sklearn.ensemble import RandomForestClassifier
+
+
+def train_classifier_rf(train_x, train_y):
+    print("***Random Forest Classifier***")
     model = RandomForestClassifier(n_estimators=100)
+    model.fit(train_x, train_y)
+    return model
+
+from sklearn.naive_bayes import GaussianNB
+
+
+def train_classifier_nb(train_x, train_y):
+    print("***Naive Bayes Classifier***")
+    model = GaussianNB()
     model.fit(train_x, train_y)
     return model
 
@@ -174,8 +210,8 @@ MAIN
 '''
 
 
-try:
-    print("---Random Forest spam predictor---")
-    run_spam_predictor()
-except TypeError as err:
-    print(err)
+# for i in range(1,4):
+#     gram = i
+#     num_top_words = 500
+#     print('ngram={0} num_top_words={1}'.format(i, num_top_words))
+run_spam_predictor()
