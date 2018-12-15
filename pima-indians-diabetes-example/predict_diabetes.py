@@ -43,10 +43,6 @@ def eval_accuracy(prediction, actual):
     return accuracy
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 3fdd0f2ab6f525fc991ea46266a7c3059f20ba03
 '''
 TEST
 '''
