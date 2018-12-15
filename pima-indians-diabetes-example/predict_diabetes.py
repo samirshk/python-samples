@@ -38,10 +38,15 @@ def eval_accuracy(prediction, actual):
             correct += 1
         # else:
         #     print("wrong c:{0} t:{1} p:{2}".format(c, actual[c], prediction[c]))
+
     accuracy = (correct / len(prediction)) * 100
     return accuracy
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3fdd0f2ab6f525fc991ea46266a7c3059f20ba03
 '''
 TEST
 '''
@@ -153,7 +158,7 @@ def summerize(dataset):
     pp.pprint(zd)
     summaries = [(mean(attribute), stdev(attribute)) for attribute in zd]
     pp.pprint(summaries)
-    del summaries[-1]  # remove class column
+    del summaries[-1] # remove class column
     return summaries
 
 
