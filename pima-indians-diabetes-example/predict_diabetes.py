@@ -155,7 +155,7 @@ def summerize_by_seperated(seperated):
 
 def summerize(dataset):
     zd = zip(*dataset)
-    summaries = [(mean(attribute), stdev(attribute)) for attribute in zd]
+    summaries = [(calc_mean(attribute), calc_stdev(attribute)) for attribute in zd]
     del summaries[-1] # remove class column
     return summaries
 
@@ -170,12 +170,12 @@ def separate_by_class(dataset):
     return separated
 
 
-def mean(numbers):
+def calc_mean(numbers):
     return sum(numbers) / len(numbers)
 
 
-def stdev(numbers):
-    avg = mean(numbers)
+def calc_stdev(numbers):
+    avg = calc_mean(numbers)
     variance = sum([pow(x-avg, 2) for x in numbers])/float(len(numbers)-1)
     return math.sqrt(variance)
 
