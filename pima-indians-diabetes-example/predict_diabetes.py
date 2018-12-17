@@ -74,24 +74,32 @@ def test_diabetes_guassiannb_predictor():
     train_set, test_set = split_dataset(dataset)
     print('Split {0} rows into\n train_set {1}\n test_set with {2}'.format(len(dataset), len(train_set), len(test_set)))
 
-    model = train_classifier_nb_manual(train_set)
-
     test_y = [tx.pop() for tx in test_set]
-    # predicted_y = model.predict(test_set)
 
+    print("** Run ManualNB Classifier**")
+    model = train_classifier_nb_manual(train_set)
     predicted_y = predict(model, test_set)
     print('Prediction: {0}'.format(predicted_y))
-
     accuracy = eval_accuracy(predicted_y, test_y)
-    print("accuracy: {0:0.2f}%".format(accuracy))
+    print("Accuracy: {0:0.2f}%".format(accuracy))
+    print("******")
+
+    print("** Run GaussianNB Classifier**")
+    model = train_classifier_gaussiannb(train_set)
+    predicted_y = model.predict(test_set)
+    print('Prediction: {0}'.format(predicted_y))
+    accuracy = eval_accuracy(predicted_y, test_y)
+    print("Accuracy: {0:0.2f}%".format(accuracy))
+    print("******")
 
 
-# def train_classifier_gaussiannb(train_set):
-#     y = np.array([a.pop() for a in train_set])
-#     x = np.array(train_set)
-#     model = GaussianNB()
-#     model.fit(x, y)
-#     return model
+def train_classifier_gaussiannb(train_set):
+    y = np.array([a.pop() for a in train_set])
+    x = np.array(train_set)
+    model = GaussianNB()
+    model.fit(x, y)
+    return model
+
 
 '''
 Manual NB Classifier
@@ -99,11 +107,8 @@ Manual NB Classifier
 
 
 def train_classifier_nb_manual(train_set):
-    pp = pprint.PrettyPrinter(indent=4)
     seperated = separate_by_class(train_set)
-    pp.pprint(seperated)
     summeries = summerize_by_seperated(seperated)
-    pp.pprint(summeries)
     return summeries
 
 
@@ -149,11 +154,8 @@ def summerize_by_seperated(seperated):
 
 
 def summerize(dataset):
-    pp = pprint.PrettyPrinter(indent=4)
     zd = zip(*dataset)
-    pp.pprint(zd)
     summaries = [(mean(attribute), stdev(attribute)) for attribute in zd]
-    pp.pprint(summaries)
     del summaries[-1] # remove class column
     return summaries
 
@@ -174,7 +176,7 @@ def mean(numbers):
 
 def stdev(numbers):
     avg = mean(numbers)
-    variance = sum([pow(x-avg,2) for x in numbers])/float(len(numbers)-1)
+    variance = sum([pow(x-avg, 2) for x in numbers])/float(len(numbers)-1)
     return math.sqrt(variance)
 
 
