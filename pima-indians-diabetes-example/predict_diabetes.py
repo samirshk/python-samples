@@ -187,8 +187,8 @@ MAIN
 
 try:
     print("start")
-    test_load_data()
-    test_split_dataset()
+    # test_load_data()
+    # test_split_dataset()
     test_diabetes_guassiannb_predictor()
 except TypeError as err:
     print(err)
