@@ -3,12 +3,13 @@ import os
 
 
 from nltk.tokenize import word_tokenize
-from nltk.stem import PorterStemmer
+# from nltk.stem import PorterStemmer
 import pandas as pd
 import numpy as np
 from nltk.corpus import stopwords
 from collections import Counter
 from nltk import ngrams
+from nltk.stem import WordNetLemmatizer
 
 
 '''
@@ -29,6 +30,7 @@ ham,"Go until jurong point, crazy.. Available only in bugis n great world la e b
 ham,Ok lar... Joking wif u oni...,,,
 spam,Free entry in 2 a wkly comp to win FA Cup final tkts 21st May 2005. Text FA to 87121 to receive entry question(std txt rate)T&C's apply 08452810075over18's,,,
 '''
+
 
 def load_data(filename):
     dataset = pd.read_csv(filename, encoding='latin-1')
@@ -157,9 +159,15 @@ def normalize_text(spam_words):
 
     sw = set(stopwords.words('english'))
     words = [w for w in words if not w in sw]
-    # stemming
-    stemmer = PorterStemmer()
-    words = [stemmer.stem(word) for word in words]
+
+    # # stemming
+    # stemmer = PorterStemmer()
+    # words = [stemmer.stem(word) for word in words]
+
+    # lemmatize
+    lemmatizer = WordNetLemmatizer()
+    words = [lemmatizer.lemmatize(word) for word in words]
+
     return words
 
 
