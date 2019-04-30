@@ -55,12 +55,19 @@ def split_dataset(dataset):
 
     return [train, test]
 
+def write_af_file(dataset):
+    dataset['qaid'] = dataset.apply(lambda x: 'spam.csv_'+str(x.name), axis=1)
+    dataset['label'] = dataset['label'].replace('spam', '2')
+    dataset.to_csv(path_or_buf='train_spam.csv', index=None, columns=['qaid', 'message', 'label', 'attrib1'])
+
 
 def run_spam_predictor(classifier = 'nb rf'):
     script_dir = os.path.dirname(__file__)
     filename = os.path.join(script_dir, "spam.csv")
     dataset = load_data(filename)
     print('Loaded data file {0} with {1} rows'.format(filename, len(dataset)))
+
+    write_af_file(dataset)
 
     train_set, test_set = split_dataset(dataset)
     print('Split {0} rows into\n train_set {1}\n test_set with {2}'.format(len(dataset), len(train_set), len(test_set)))
